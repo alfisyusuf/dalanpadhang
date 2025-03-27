@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Calon Penerima Zakat</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #27ae60;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --ring1-color: #e74c3c;
+            --ring2-color: #f39c12;
+            --ring3-color: #3498db;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f8fa;
+            color: var(--dark-color);
+            padding-bottom: 60px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+            margin-bottom: 1.5rem;
+            border: none;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .stats-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stats-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stats-card .number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stats-card .label {
+            font-size: 1rem;
+            color: #7f8c8d;
+        }
+        
+        .ring-1 {
+            color: var(--ring1-color);
+            border-left: 5px solid var(--ring1-color);
+        }
+        
+        .ring-2 {
+            color: var(--ring2-color);
+            border-left: 5px solid var(--ring2-color);
+        }
+        
+        .ring-3 {
+            color: var(--ring3-color);
+            border-left: 5px solid var(--ring3-color);
+        }
+        
+        .nav-tabs .nav-link {
+            border-radius: 10px 10px 0 0;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+        
+        .nav-tabs .nav-link.active {
+            font-weight: 600;
+        }
+        
+        .nav-tabs .nav-link.ring-1-tab.active {
+            color: var(--ring1-color);
+            border-top: 3px solid var(--ring1-color);
+        }
+        
+        .nav-tabs .nav-link.ring-2-tab.active {
+            color: var(--ring2-color);
+            border-top: 3px solid var(--ring2-color);
+        }
+        
+        .nav-tabs .nav-link.ring-3-tab.active {
+            color: var(--ring3-color);
+            border-top: 3px solid var(--ring3-color);
+        }
+        
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .dataTables_wrapper {
+            padding: 1rem;
+        }
+        
+        .badge-ring-1 {
+            background-color: var(--ring1-color);
+            color: white;
+        }
+        
+        .badge-ring-2 {
+            background-color: var(--ring2-color);
+            color: white;
+        }
+        
+        .badge-ring-3 {
+            background-color: var(--ring3-color);
+            color: white;
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-container input {
+            border-radius: 50px;
+            padding-left: 3rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .search-container .fa-search {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #95a5a6;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem 0;
+            }
+            
+            .stats-card .icon {
+                font-size: 2rem;
+            }
+            
+            .stats-card .number {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+            }
+        }
+        
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab-pane {
+            padding: 1.5rem 0;
+        }
+        
+        .dataTables_filter {
+            display: none;
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.5em 0.8em;
+            border-radius: 50px;
+        }
+        
+        .table th {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-2"><i class="fas fa-hand-holding-heart me-2"></i>Daftar Calon Penerima Zakat</h1>
+                    <p class="mb-0">Sistem Informasi Penerima Zakat berdasarkan Ring</p>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <span class="badge bg-light text-dark p-2">
+                        <i class="fas fa-calendar-alt me-1"></i> <span id="current-date"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading-spinner">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        
+        <div id="content" style="display: none;">
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3 col-6">
+                    <div class="card stats-card">
+                        <div class="icon ring-1">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="number" id="total-penerima">0</div>
+                        <div class="label">Total Penerima</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card stats-card">
+                        <div class="icon ring-1">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="number" id="total-paket">0</div>
+                        <div class="label">Total Paket</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card stats-card">
+                        <div class="icon ring-1">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <div class="number" id="total-jiwa">0</div>
+                        <div class="label">Total Jiwa</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="card stats-card">
+                        <div class="icon ring-1">
+                            <i class="fas fa-ring"></i>
+                        </div>
+                        <div class="number">3</div>
+                        <div class="label">Jumlah Ring</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Charts -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <i class="fas fa-chart-pie me-2"></i> Distribusi Penerima per Ring
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="ringChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-white">
+                            <i class="fas fa-chart-bar me-2"></i> Jumlah Paket per Ring
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="paketChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ring Details -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <i class="fas fa-list-alt me-2"></i> Daftar Penerima Zakat
+                        </div>
+                        <div class="col-md-6">
+                            <div class="search-container">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="searchInput" class="form-control" placeholder="Cari nama penerima...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active ring-1-tab" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">
+                                <i class="fas fa-th-list me-1"></i> Semua
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link ring-1-tab" id="ring1-tab" data-bs-toggle="tab" data-bs-target="#ring1" type="button" role="tab" aria-controls="ring1" aria-selected="false">
+                                <i class="fas fa-circle me-1 text-danger"></i> Ring 1
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link ring-2-tab" id="ring2-tab" data-bs-toggle="tab" data-bs-target="#ring2" type="button" role="tab" aria-controls="ring2" aria-selected="false">
+                                <i class="fas fa-circle me-1 text-warning"></i> Ring 2
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link ring-3-tab" id="ring3-tab" data-bs-toggle="tab" data-bs-target="#ring3" type="button" role="tab" aria-controls="ring3" aria-selected="false">
+                                <i class="fas fa-circle me-1 text-primary"></i> Ring 3
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="allTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nama Kepala Keluarga</th>
+                                            <th>Ring</th>
+                                            <th>Jiwa</th>
+                                            <th>Jumlah Paket</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="allTableBody">
+                                        <!-- Data akan diisi melalui JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="ring1" role="tabpanel" aria-labelledby="ring1-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="ring1Table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nama Kepala Keluarga</th>
+                                            <th>Jiwa</th>
+                                            <th>Jumlah Paket</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ring1TableBody">
+                                        <!-- Data akan diisi melalui JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="ring2" role="tabpanel" aria-labelledby="ring2-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="ring2Table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nama Kepala Keluarga</th>
+                                            <th>Jiwa</th>
+                                            <th>Jumlah Paket</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ring2TableBody">
+                                        <!-- Data akan diisi melalui JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="ring3" role="tabpanel" aria-labelledby="ring3-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="ring3Table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nama Kepala Keluarga</th>
+                                            <th>Jiwa</th>
+                                            <th>Jumlah Paket</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ring3TableBody">
+                                        <!-- Data akan diisi melalui JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ring Summary Cards -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-danger text-white">
+                            <i class="fas fa-users me-2"></i> Ring 1
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="text-center mb-3">
+                                        <div class="fs-4 fw-bold" id="ring1-count">0</div>
+                                        <div class="small text-muted">Penerima</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center mb-3">
+                                        <div class="fs-4 fw-bold" id="ring1-paket">0</div>
+                                        <div class="small text-muted">Paket</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="fs-4 fw-bold" id="ring1-jiwa">0</div>
+                                <div class="small text-muted">Total Jiwa</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-warning text-white">
+                            <i class="fas fa-users me-2"></i> Ring 2
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="text-center mb-3">
+                                        <div class="fs-4 fw-bold" id="ring2-count">0</div>
+                                        <div class="small text-muted">Penerima</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center mb-3">
+                                        <div class="fs-4 fw-bold" id="ring2-paket">0</div>
+                                        <div class="small text-muted">Paket</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="fs-4 fw-bold" id="ring2-jiwa">0</div>
+                                <div class="small text-muted">Total Jiwa</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-users me-2"></i> Ring 3
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="text-center mb-3">
+                                        <div class="fs-4 fw-bold" id="ring3-count">0</div>
+                                        <div class="small text-muted">Penerima</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center mb-3">
+                                        <div class="fs-4 fw-bold" id="ring3-paket">0</div>
+                                        <div class="small text-muted">Paket</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="fs-4 fw-bold" id="ring3-jiwa">0</div>
+                                <div class="small text-muted">Total Jiwa</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <div class="container">
+            <p class="mb-0">© 2023 Sistem Informasi Penerima Zakat | Dibuat dengan <i class="fas fa-heart text-danger"></i> untuk memudahkan panitia</p>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Set current date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('id-ID', options);
+        
+        // DataTables instances
+        let allTable, ring1Table, ring2Table, ring3Table;
+        
+        // Charts
+        let ringChart, paketChart;
+        
+        // Fetch data from Google Apps Script
+        async function fetchData() {
+            try {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbxUyRvdQPV1VnFEmtF1TGSjlG9a_TvCjx7qIX29DILwObwIMMePW8XS97k0qXCHTDjd/exec');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('Terjadi kesalahan saat mengambil data. Silakan coba lagi nanti.');
+                return [];
+            }
+        }
+        
+        // Process and display data
+        async function processData() {
+            const data = await fetchData();
+            
+            if (data.length === 0) {
+                document.getElementById('loading').style.display = 'none';
+                alert('Tidak ada data yang ditemukan.');
+                return;
+            }
+            
+            // Hide loading spinner and show content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            
+            // Filter data by ring
+            const ring1Data = data.filter(item => item.Ring === 1);
+            const ring2Data = data.filter(item => item.Ring === 2);
+            const ring3Data = data.filter(item => item.Ring === 3);
+            
+            // Calculate statistics
+            const totalPenerima = data.length;
+            const totalJiwa = data.reduce((sum, item) => sum + item.Jiwa, 0);
+            const totalPaket = data.reduce((sum, item) => sum + item["Jumlah Paket"], 0);
+            
+            const ring1Count = ring1Data.length;
+            const ring1Jiwa = ring1Data.reduce((sum, item) => sum + item.Jiwa, 0);
+            const ring1Paket = ring1Data.reduce((sum, item) => sum + item["Jumlah Paket"], 0);
+            
+            const ring2Count = ring2Data.length;
+            const ring2Jiwa = ring2Data.reduce((sum, item) => sum + item.Jiwa, 0);
+            const ring2Paket = ring2Data.reduce((sum, item) => sum + item["Jumlah Paket"], 0);
+            
+            const ring3Count = ring3Data.length;
+            const ring3Jiwa = ring3Data.reduce((sum, item) => sum + item.Jiwa, 0);
+            const ring3Paket = ring3Data.reduce((sum, item) => sum + item["Jumlah Paket"], 0);
+            
+            // Update statistics in the UI
+            document.getElementById('total-penerima').textContent = totalPenerima;
+            document.getElementById('total-jiwa').textContent = totalJiwa;
+            document.getElementById('total-paket').textContent = totalPaket;
+            
+            document.getElementById('ring1-count').textContent = ring1Count;
+            document.getElementById('ring1-jiwa').textContent = ring1Jiwa;
+            document.getElementById('ring1-paket').textContent = ring1Paket;
+            
+            document.getElementById('ring2-count').textContent = ring2Count;
+            document.getElementById('ring2-jiwa').textContent = ring2Jiwa;
+            document.getElementById('ring2-paket').textContent = ring2Paket;
+            
+            document.getElementById('ring3-count').textContent = ring3Count;
+            document.getElementById('ring3-jiwa').textContent = ring3Jiwa;
+            document.getElementById('ring3-paket').textContent = ring3Paket;
+            
+            // Populate tables
+            populateTable('allTableBody', data);
+            populateTable('ring1TableBody', ring1Data);
+            populateTable('ring2TableBody', ring2Data);
+            populateTable('ring3TableBody', ring3Data);
+            
+            // Initialize DataTables
+            initializeDataTables();
+            
+            // Create charts
+            createCharts(ring1Count, ring2Count, ring3Count, ring1Paket, ring2Paket, ring3Paket);
+            
+            // Initialize search functionality
+            initializeSearch();
+        }
+        
+        // Populate table with data
+        function populateTable(tableId, data) {
+            const tableBody = document.getElementById(tableId);
+            tableBody.innerHTML = '';
+            
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // Create ID cell
+                const idCell = document.createElement('td');
+                idCell.textContent = item.ID;
+                row.appendChild(idCell);
+                
+                // Create Name cell
+                const nameCell = document.createElement('td');
+                nameCell.textContent = item["Nama Kepala Keluarga"];
+                row.appendChild(nameCell);
+                
+                // Create Ring cell (only for all table)
+                if (tableId === 'allTableBody') {
+                    const ringCell = document.createElement('td');
+                    const ringBadge = document.createElement('span');
+                    ringBadge.className = `badge badge-ring-${item.Ring}`;
+                    ringBadge.textContent = `Ring ${item.Ring}`;
+                    ringCell.appendChild(ringBadge);
+                    row.appendChild(ringCell);
+                }
+                
+                // Create Jiwa cell
+                const jiwaCell = document.createElement('td');
+                jiwaCell.textContent = item.Jiwa;
+                row.appendChild(jiwaCell);
+                
+                // Create Paket cell
+                const paketCell = document.createElement('td');
+                paketCell.textContent = item["Jumlah Paket"];
+                row.appendChild(paketCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Initialize DataTables
+        function initializeDataTables() {
+            const dataTablesOptions = {
+                responsive: true,
+                language: {
+                    search: "Cari:",
+                    lengthMenu: "Tampilkan _MENU_ data",
+                    zeroRecords: "Tidak ada data yang ditemukan",
+                    info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                    infoEmpty: "Tidak ada data yang tersedia",
+                    infoFiltered: "(difilter dari _MAX_ total data)",
+                    paginate: {
+                        first: "Pertama",
+                        last: "Terakhir",
+                        next: "Selanjutnya",
+                        previous: "Sebelumnya"
+                    }
+                },
+                pageLength: 10,
+                lengthMenu: [5, 10, 25, 50, 100]
+            };
+            
+            allTable = $('#allTable').DataTable(dataTablesOptions);
+            ring1Table = $('#ring1Table').DataTable(dataTablesOptions);
+            ring2Table = $('#ring2Table').DataTable(dataTablesOptions);
+            ring3Table = $('#ring3Table').DataTable(dataTablesOptions);
+        }
+        
+        // Create charts
+        function createCharts(ring1Count, ring2Count, ring3Count, ring1Paket, ring2Paket, ring3Paket) {
+            // Ring distribution chart
+            const ringCtx = document.getElementById('ringChart').getContext('2d');
+            ringChart = new Chart(ringCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Ring 1', 'Ring 2', 'Ring 3'],
+                    datasets: [{
+                        data: [ring1Count, ring2Count, ring3Count],
+                        backgroundColor: [
+                            '#e74c3c',
+                            '#f39c12',
+                            '#3498db'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} penerima (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Paket distribution chart
+            const paketCtx = document.getElementById('paketChart').getContext('2d');
+            paketChart = new Chart(paketCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Ring 1', 'Ring 2', 'Ring 3'],
+                    datasets: [{
+                        label: 'Jumlah Paket',
+                        data: [ring1Paket, ring2Paket, ring3Paket],
+                        backgroundColor: [
+                            '#e74c3c',
+                            '#f39c12',
+                            '#3498db'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.raw || 0;
+                                    return `${label}: ${value} paket`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize search functionality
+        function initializeSearch() {
+            const searchInput = document.getElementById('searchInput');
+            
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                // Get active tab
+                const activeTab = document.querySelector('.tab-pane.active');
+                const activeTabId = activeTab.id;
+                
+                // Search in the active table
+                if (activeTabId === 'all') {
+                    allTable.search(searchTerm).draw();
+                } else if (activeTabId === 'ring1') {
+                    ring1Table.search(searchTerm).draw();
+                } else if (activeTabId === 'ring2') {
+                    ring2Table.search(searchTerm).draw();
+                } else if (activeTabId === 'ring3') {
+                    ring3Table.search(searchTerm).draw();
+                }
+            });
+            
+            // Add event listener for tab changes to update search
+            $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                // Get active tab
+                const activeTabId = e.target.getAttribute('aria-controls');
+                
+                // Search in the active table
+                if (activeTabId === 'all') {
+                    allTable.search(searchTerm).draw();
+                } else if (activeTabId === 'ring1') {
+                    ring1Table.search(searchTerm).draw();
+                } else if (activeTabId === 'ring2') {
+                    ring2Table.search(searchTerm).draw();
+                } else if (activeTabId === 'ring3') {
+                    ring3Table.search(searchTerm).draw();
+                }
+            });
+        }
+        
+        // Add event listener for tab changes
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function (event) {
+                // Adjust DataTables columns when shown
+                $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+            });
+        });
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            processData();
+            
+            // Add refresh button functionality
+            document.getElementById('refresh-btn').addEventListener('click', function() {
+                location.reload();
+            });
+        });
+        
+        // Add error handling for data loading
+        window.addEventListener('error', function(e) {
+            document.getElementById('loading').style.display = 'none';
+            alert('Terjadi kesalahan saat memuat halaman. Silakan coba lagi nanti.');
+            console.error('Error loading page:', e);
+        });
+    </script>
+</body>
+</html>
