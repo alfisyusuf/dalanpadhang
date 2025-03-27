@@ -3,29 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Daftar pemberi zakat fitrah">
+    <meta name="theme-color" content="#17a2b8">
     <title>Daftar Pemberi Zakat</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap5.min.css">
     <style>
         body {
             background-color: #f8f9fa;
-            padding-top: 20px;
-            padding-bottom: 20px;
+            padding: 15px 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         .container {
             background-color: white;
-            padding: 30px;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            margin: auto;
+            width: 100%;
         }
         h1 {
             color: #17a2b8;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
         }
         .btn-success {
             margin-bottom: 20px;
+            min-height: 44px;
         }
         .table-responsive {
             margin-top: 20px;
@@ -56,6 +65,83 @@
         .anggota-tooltip {
             cursor: pointer;
             color: #007bff;
+            text-decoration: underline;
+            display: inline-block;
+            padding: 2px 5px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-sm {
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dataTables_filter input {
+            min-height: 44px;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+        }
+        .dataTables_length select {
+            min-height: 44px;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.25rem;
+        }
+        .pagination .page-link {
+            min-height: 38px;
+            min-width: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .offline-alert {
+            display: none;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .stats-container {
+            background-color: #e9f7ef;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 150px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        @media (max-width: 576px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            .container {
+                padding: 15px;
+            }
+            .stat-card {
+                min-width: 100%;
+            }
         }
     </style>
 </head>
@@ -63,9 +149,30 @@
     <div class="container">
         <h1><i class="fas fa-list-alt"></i> Daftar Pemberi Zakat</h1>
         
-        <a href="index.html" class="btn btn-success">
-            <i class="fas fa-plus-circle"></i> Tambah Data Baru
-        </a>
+        <div class="offline-alert" id="offlineAlert">
+            <i class="fas fa-exclamation-triangle"></i> Anda sedang offline. Beberapa fitur mungkin tidak tersedia.
+        </div>
+        
+        <div class="stats-container" id="statsContainer">
+            <div class="stat-card">
+                <div class="stat-value" id="totalKeluarga">0</div>
+                <div class="stat-label">Total Keluarga</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalJiwa">0</div>
+                <div class="stat-label">Total Jiwa</div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <a href="index.html" class="btn btn-success">
+                <i class="fas fa-plus-circle"></i> Tambah Data Baru
+            </a>
+            
+            <button id="refreshBtn" class="btn btn-outline-primary">
+                <i class="fas fa-sync-alt"></i> Refresh Data
+            </button>
+        </div>
         
         <div class="table-responsive">
             <table id="zakatTable" class="table table-striped table-hover">
@@ -76,6 +183,7 @@
                         <th>Nama Kepala Keluarga</th>
                         <th>Anggota Keluarga</th>
                         <th>Total Jiwa</th>
+                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -95,13 +203,80 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Ganti URL ini dengan URL dari Google Apps Script web app Anda
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbyZJC0QKXDaQkN-pSgQa9c-nF1RGpJ4WAYaYEVNS-pgCof4HbeyztJx1NGCEHyMfuLE/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzrquzpIXYnSrmBvGtTYJetVYBCn5zupGaC-O-LRerCJ68xH8aj2zVCJ0HxlkRTDNcU/exec';
         
         const tableBody = document.getElementById('tableBody');
         const loadingOverlay = document.getElementById('loadingOverlay');
+        const offlineAlert = document.getElementById('offlineAlert');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const totalKeluargaEl = document.getElementById('totalKeluarga');
+        const totalJiwaEl = document.getElementById('totalJiwa');
+        
+        let dataTable;
+        let cachedData = [];
+        
+        // Cek status koneksi
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineAlert.style.display = 'none';
+                loadData();
+            } else {
+                offlineAlert.style.display = 'block';
+                // Tampilkan data dari cache jika ada
+                if (cachedData.length > 0) {
+                    renderData(cachedData);
+                }
+            }
+        }
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // Refresh button
+        refreshBtn.addEventListener('click', function() {
+            if (navigator.onLine) {
+                loadData();
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Anda Offline',
+                    text: 'Tidak dapat memperbarui data saat offline.',
+                    confirmButtonColor: '#17a2b8'
+                });
+            }
+        });
+        
+        // Fungsi untuk memuat data dari cache
+        function loadCachedData() {
+            const savedData = localStorage.getItem('zakatData');
+            if (savedData) {
+                return JSON.parse(savedData);
+            }
+            return [];
+        }
+        
+        // Fungsi untuk menyimpan data ke cache
+        function saveCachedData(data) {
+            localStorage.setItem('zakatData', JSON.stringify(data));
+        }
+        
+        // Fungsi untuk menghitung statistik
+        function calculateStats(data) {
+            let totalKeluarga = data.length;
+            let totalJiwa = 0;
+            
+            data.forEach(row => {
+                totalJiwa += parseInt(row[4] || 0); // Total Jiwa
+            });
+            
+            totalKeluargaEl.textContent = totalKeluarga;
+            totalJiwaEl.textContent = totalJiwa;
+        }
         
         // Fungsi untuk memuat data dari Google Sheets
         async function loadData() {
@@ -119,80 +294,214 @@
                 // Hapus header (baris pertama) dari data
                 const rows = data.slice(1);
                 
-                // Isi tabel dengan data
-                tableBody.innerHTML = '';
-                rows.forEach((row, index) => {
-                    const [tanggal, waktu, namaKepala, anggotaKeluarga, totalJiwa] = row;
-                    
-                    // Buat array dari anggota keluarga (jika ada)
-                    let anggotaArray = [];
-                    if (anggotaKeluarga) {
-                        anggotaArray = anggotaKeluarga.split(', ');
-                    }
-                    
-                    // Tentukan tampilan anggota keluarga
-                    let anggotaDisplay = '';
-                    if (anggotaArray.length > 0) {
-                        if (anggotaArray.length <= 2) {
-                            anggotaDisplay = anggotaKeluarga;
-                        } else {
-                            anggotaDisplay = `<span class="anggota-tooltip" data-anggota="${anggotaKeluarga}">${anggotaArray.length} anggota keluarga</span>`;
-                        }
-                    } else {
-                        anggotaDisplay = '-';
-                    }
-                    
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${tanggal} ${waktu}</td>
-                        <td>${namaKepala}</td>
-                        <td>${anggotaDisplay}</td>
-                        <td><span class="badge-success">${totalJiwa}</span></td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
+                // Simpan data ke cache
+                cachedData = rows;
+                saveCachedData(rows);
                 
-                // Inisialisasi DataTable
-                $('#zakatTable').DataTable({
-                    responsive: true,
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
-                    },
-                    order: [[1, 'desc']] // Urutkan berdasarkan tanggal & waktu (kolom kedua)
-                });
-                
-                // Tambahkan event listener untuk tooltip anggota keluarga
-                document.querySelectorAll('.anggota-tooltip').forEach(tooltip => {
-                    tooltip.addEventListener('click', function() {
-                        const anggota = this.getAttribute('data-anggota');
-                        const anggotaList = anggota.split(', ').map(item => `<li>${item}</li>`).join('');
-                        
-                        Swal.fire({
-                            title: 'Daftar Anggota Keluarga',
-                            html: `<ul style="text-align: left;">${anggotaList}</ul>`,
-                            confirmButtonColor: '#28a745'
-                        });
-                    });
-                });
+                // Render data
+                renderData(rows);
                 
             } catch (error) {
                 // Sembunyikan loading overlay
                 loadingOverlay.style.display = 'none';
                 
-                // Tampilkan pesan error
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Terjadi kesalahan saat memuat data.',
-                    confirmButtonColor: '#dc3545'
-                });
+                // Coba tampilkan data dari cache
+                const cachedRows = loadCachedData();
+                if (cachedRows.length > 0) {
+                    cachedData = cachedRows;
+                    renderData(cachedRows);
+                    
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Menggunakan Data Cache',
+                        text: 'Tidak dapat terhubung ke server. Menampilkan data yang tersimpan.',
+                        confirmButtonColor: '#17a2b8'
+                    });
+                } else {
+                    // Tampilkan pesan error
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Terjadi kesalahan saat memuat data.',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
                 console.error('Error!', error);
             }
         }
+        // Fungsi untuk render data ke tabel
+        function renderData(rows) {
+            // Hitung statistik
+            calculateStats(rows);
+            
+            // Hancurkan DataTable jika sudah ada
+            if (dataTable) {
+                dataTable.destroy();
+            }
+            
+            // Isi tabel dengan data
+            tableBody.innerHTML = '';
+            rows.forEach((row, index) => {
+                const [tanggal, waktu, namaKepala, anggotaKeluarga, totalJiwa, rowId] = row;
+                
+                // Buat array dari anggota keluarga (jika ada)
+                let anggotaArray = [];
+                if (anggotaKeluarga) {
+                    anggotaArray = anggotaKeluarga.split(', ');
+                }
+                
+                // Tentukan tampilan anggota keluarga
+                let anggotaDisplay = '';
+                if (anggotaArray.length > 0) {
+                    if (anggotaArray.length <= 2) {
+                        anggotaDisplay = anggotaKeluarga;
+                    } else {
+                        anggotaDisplay = `<span class="anggota-tooltip" data-anggota="${anggotaKeluarga}">${anggotaArray.length} anggota keluarga</span>`;
+                    }
+                } else {
+                    anggotaDisplay = '-';
+                }
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${tanggal} ${waktu}</td>
+                    <td>${namaKepala}</td>
+                    <td>${anggotaDisplay}</td>
+                    <td><span class="badge-success">${totalJiwa}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="edit.html?id=${rowId}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button class="btn btn-danger btn-sm delete-btn" data-id="${rowId}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+            
+            // Inisialisasi DataTable
+            dataTable = $('#zakatTable').DataTable({
+                responsive: true,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
+                },
+                order: [[1, 'desc']], // Urutkan berdasarkan tanggal & waktu (kolom kedua)
+                columnDefs: [
+                    { responsivePriority: 1, targets: [0, 2, 4, 5] }, // Kolom prioritas pada tampilan responsif
+                    { responsivePriority: 2, targets: [1, 3] }
+                ]
+            });
+            
+            // Tambahkan event listener untuk tooltip anggota keluarga
+            document.querySelectorAll('.anggota-tooltip').forEach(tooltip => {
+                tooltip.addEventListener('click', function() {
+                    const anggota = this.getAttribute('data-anggota');
+                    const anggotaList = anggota.split(', ').map(item => `<li>${item}</li>`).join('');
+                    
+                    Swal.fire({
+                        title: 'Daftar Anggota Keluarga',
+                        html: `<ul style="text-align: left;">${anggotaList}</ul>`,
+                        confirmButtonColor: '#28a745'
+                    });
+                });
+            });
+            
+            // Tambahkan event listener untuk tombol hapus
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    deleteData(id);
+                });
+            });
+        }
+        
+        // Fungsi untuk menghapus data
+        function deleteData(id) {
+            Swal.fire({
+                title: 'Konfirmasi Hapus',
+                text: 'Apakah Anda yakin ingin menghapus data ini?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (!navigator.onLine) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Anda Offline',
+                            text: 'Tidak dapat menghapus data saat offline.',
+                            confirmButtonColor: '#dc3545'
+                        });
+                        return;
+                    }
+                    
+                    // Tampilkan loading overlay
+                    loadingOverlay.style.display = 'flex';
+                    
+                    // Kirim permintaan hapus ke server
+                    fetch(scriptURL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            'action': 'delete',
+                            'id': id
+                        })
+                    })
+                    .then(() => {
+                        // Sembunyikan loading overlay
+                        loadingOverlay.style.display = 'none';
+                        
+                        // Tampilkan pesan sukses
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'Data berhasil dihapus.',
+                            confirmButtonColor: '#28a745'
+                        }).then(() => {
+                            // Muat ulang data
+                            loadData();
+                        });
+                    })
+                    .catch(error => {
+                        // Sembunyikan loading overlay
+                        loadingOverlay.style.display = 'none';
+                        
+                        // Tampilkan pesan error
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Terjadi kesalahan saat menghapus data.',
+                            confirmButtonColor: '#dc3545'
+                        });
+                        console.error('Error!', error);
+                    });
+                }
+            });
+        }
         
         // Muat data saat halaman dimuat
-        document.addEventListener('DOMContentLoaded', loadData);
+        document.addEventListener('DOMContentLoaded', updateOnlineStatus);
+
+        // Service Worker untuk offline capability
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('ServiceWorker registered: ', registration);
+                }).catch(error => {
+                    console.log('ServiceWorker registration failed: ', error);
+                });
+            });
+        }
     </script>
 </body>
 </html>
