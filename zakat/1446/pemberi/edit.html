@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Zakat</title>
+    <title>Edit Data Zakat</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -20,19 +20,17 @@
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
         }
         h1 {
-            color: #28a745;
+            color: #fd7e14;
             text-align: center;
             margin-bottom: 30px;
         }
-        .btn-success {
-            background-color: #28a745;
-            border-color: #28a745;
+        .btn-warning {
             width: 100%;
             padding: 12px;
             font-size: 18px;
             margin-top: 20px;
         }
-        .btn-info {
+        .btn-secondary {
             width: 100%;
             padding: 12px;
             font-size: 18px;
@@ -45,7 +43,7 @@
             margin-top: 10px;
         }
         .anggota-item {
-            background-color: #e9f7ef;
+            background-color: #fff3e0;
             padding: 8px 12px;
             margin: 5px 0;
             border-radius: 5px;
@@ -77,9 +75,21 @@
 </head>
 <body>
     <div class="container">
-        <h1><i class="fas fa-hand-holding-heart"></i> Form Zakat</h1>
+        <h1><i class="fas fa-edit"></i> Edit Data Zakat</h1>
         
-        <form id="zakatForm">
+        <form id="editZakatForm">
+            <input type="hidden" id="rowId">
+            
+            <div class="mb-3">
+                <label for="tanggal" class="form-label">Tanggal</label>
+                <input type="text" class="form-control" id="tanggal" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="waktu" class="form-label">Waktu</label>
+                <input type="text" class="form-control" id="waktu" required>
+            </div>
+            
             <div class="mb-3">
                 <label for="namaKepala" class="form-label">Nama Kepala Keluarga</label>
                 <input type="text" class="form-control" id="namaKepala" required>
@@ -89,7 +99,7 @@
                 <label class="form-label">Anggota Keluarga</label>
                 <div class="input-group">
                     <input type="text" class="form-control" id="anggotaInput" placeholder="Nama anggota keluarga">
-                    <button class="btn btn-outline-success" type="button" id="tambahAnggota">
+                    <button class="btn btn-outline-warning" type="button" id="tambahAnggota">
                         <i class="fas fa-plus"></i> Tambah
                     </button>
                 </div>
@@ -98,17 +108,17 @@
             
             <div class="mb-3">
                 <label for="totalJiwa" class="form-label">Total Jiwa</label>
-                <input type="number" class="form-control" id="totalJiwa" readonly>
+                <input type="number" class="form-control" id="totalJiwa" required>
             </div>
             
-            <button type="submit" class="btn btn-success">
-                <i class="fas fa-paper-plane"></i> Kirim Data
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-save"></i> Simpan Perubahan
             </button>
+            
+            <a href="daftar.html" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Kembali ke Daftar
+            </a>
         </form>
-        
-        <a href="daftar.html" class="btn btn-info">
-            <i class="fas fa-list"></i> Lihat Daftar Pemberi Zakat
-        </a>
     </div>
 
     <div id="loadingOverlay">
@@ -123,14 +133,26 @@
         // Ganti URL ini dengan URL dari Google Apps Script web app Anda
         const scriptURL = 'https://script.google.com/macros/s/AKfycbxL7H5Q64GAUa7jEccIPZYd4cfkLYWF_3fYcQEAdC802rKm5T-3hs-ussZaRpUPsyVo/exec';
         
-        const anggotaList = document.getElementById('anggotaList');
+        const rowIdInput = document.getElementById('rowId');
+        const tanggalInput = document.getElementById('tanggal');
+        const waktuInput = document.getElementById('waktu');
+        const namaKepalaInput = document.getElementById('namaKepala');
         const anggotaInput = document.getElementById('anggotaInput');
         const tambahAnggotaBtn = document.getElementById('tambahAnggota');
+        const anggotaList = document.getElementById('anggotaList');
         const totalJiwaInput = document.getElementById('totalJiwa');
-        const form = document.getElementById('zakatForm');
+        const form = document.getElementById('editZakatForm');
         const loadingOverlay = document.getElementById('loadingOverlay');
         
         let anggotaKeluarga = [];
+        
+        // Fungsi untuk mendapatkan parameter dari URL
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
         
         // Fungsi untuk menghitung total jiwa
         function hitungTotalJiwa() {
@@ -138,9 +160,6 @@
             const total = 1 + anggotaKeluarga.length;
             totalJiwaInput.value = total;
         }
-        
-        // Inisialisasi total jiwa
-        hitungTotalJiwa();
         
         // Tambah anggota keluarga
         tambahAnggotaBtn.addEventListener('click', function() {
@@ -179,11 +198,69 @@
             });
         }
         
+        // Muat data berdasarkan ID
+        async function loadDataById(id) {
+            try {
+                // Tampilkan loading overlay
+                loadingOverlay.style.display = 'flex';
+                
+                // Fetch data dari Google Apps Script
+                const response = await fetch(`${scriptURL}?action=getDataById&id=${id}`);
+                const data = await response.json();
+                
+                // Sembunyikan loading overlay
+                loadingOverlay.style.display = 'none';
+                
+                if (!data) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Data tidak ditemukan!',
+                        confirmButtonColor: '#dc3545'
+                    }).then(() => {
+                        window.location.href = 'daftar.html';
+                    });
+                    return;
+                }
+                
+                // Isi form dengan data
+                rowIdInput.value = id;
+                tanggalInput.value = data[0]; // Tanggal
+                waktuInput.value = data[1];   // Waktu
+                namaKepalaInput.value = data[2]; // Nama Kepala Keluarga
+                
+                // Isi anggota keluarga
+                if (data[3]) {
+                    anggotaKeluarga = data[3].split(', ');
+                    renderAnggotaList();
+                }
+                
+                totalJiwaInput.value = data[4]; // Total Jiwa
+                
+            } catch (error) {
+                // Sembunyikan loading overlay
+                loadingOverlay.style.display = 'none';
+                
+                // Tampilkan pesan error
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Terjadi kesalahan saat memuat data.',
+                    confirmButtonColor: '#dc3545'
+                });
+                console.error('Error!', error);
+            }
+        }
+        
         // Submit form
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const namaKepala = document.getElementById('namaKepala').value.trim();
+            const id = rowIdInput.value;
+            const tanggal = tanggalInput.value;
+            const waktu = waktuInput.value;
+            const namaKepala = namaKepalaInput.value.trim();
+            const totalJiwa = totalJiwaInput.value;
             
             if (!namaKepala) {
                 Swal.fire({
@@ -193,21 +270,6 @@
                 });
                 return;
             }
-            
-            // Dapatkan tanggal dan waktu saat ini (timezone Asia/Jakarta)
-            const now = new Date();
-            const jakartaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-            
-            const tanggal = jakartaTime.toLocaleDateString('id-ID', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-            
-            const waktu = jakartaTime.toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
             
             // Tampilkan loading overlay
             loadingOverlay.style.display = 'flex';
@@ -220,11 +282,13 @@
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 body: new URLSearchParams({
+                    'action': 'update',
+                    'id': id,
                     'tanggal': tanggal,
                     'waktu': waktu,
                     'namaKepala': namaKepala,
                     'anggotaKeluarga': anggotaKeluarga.join(', '),
-                    'totalJiwa': totalJiwaInput.value
+                    'totalJiwa': totalJiwa
                 })
             })
             .then(() => {
@@ -235,14 +299,11 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
-                    text: 'Data zakat berhasil disimpan.',
-                    confirmButtonColor: '#28a745'
+                    text: 'Data zakat berhasil diperbarui.',
+                    confirmButtonColor: '#fd7e14'
                 }).then(() => {
-                    // Reset form
-                    form.reset();
-                    anggotaKeluarga = [];
-                    renderAnggotaList();
-                    hitungTotalJiwa();
+                    // Kembali ke halaman daftar
+                    window.location.href = 'daftar.html';
                 });
             })
             .catch(error => {
@@ -253,11 +314,28 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Terjadi kesalahan saat menyimpan data.',
+                    text: 'Terjadi kesalahan saat memperbarui data.',
                     confirmButtonColor: '#dc3545'
                 });
                 console.error('Error!', error.message);
             });
+        });
+        
+        // Muat data saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            const id = getUrlParameter('id');
+            if (id) {
+                loadDataById(id);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'ID data tidak ditemukan!',
+                    confirmButtonColor: '#dc3545'
+                }).then(() => {
+                    window.location.href = 'daftar.html';
+                });
+            }
         });
     </script>
 </body>
