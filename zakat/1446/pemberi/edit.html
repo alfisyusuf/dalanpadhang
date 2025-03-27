@@ -131,7 +131,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Ganti URL ini dengan URL dari Google Apps Script web app Anda
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxB2SgxTi05wCa5IOCJ-ATbqaGj7JkSZ8tBn9g9qQMmGduqstJ_VJtoLt9_13YvjSIf/exec';
+        const scriptURL = 'GANTI_DENGAN_URL_GOOGLE_SCRIPT_WEB_APP_ANDA';
         
         const rowIdInput = document.getElementById('rowId');
         const tanggalInput = document.getElementById('tanggal');
@@ -159,57 +159,6 @@
             // Total jiwa = kepala keluarga (1) + jumlah anggota keluarga
             const total = 1 + anggotaKeluarga.length;
             totalJiwaInput.value = total;
-        }
-        
-        // Fungsi untuk memformat tanggal dari format ISO ke format DD/MM/YYYY
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            
-            // Cek apakah tanggal sudah dalam format DD/MM/YYYY
-            if (dateString.includes('/')) {
-                return dateString;
-            }
-            
-            try {
-                const date = new Date(dateString);
-                if (isNaN(date.getTime())) {
-                    return dateString; // Jika tanggal tidak valid, kembalikan string asli
-                }
-                
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                
-                return `${day}/${month}/${year}`;
-            } catch (e) {
-                console.error("Error formatting date:", e);
-                return dateString;
-            }
-        }
-
-        // Fungsi untuk memformat waktu
-        function formatTime(timeString) {
-            if (!timeString) return '';
-            
-            // Cek apakah waktu sudah dalam format HH.MM
-            if (timeString.includes('.')) {
-                return timeString;
-            }
-            
-            try {
-                const date = new Date(timeString);
-                if (isNaN(date.getTime())) {
-                    return timeString; // Jika waktu tidak valid, kembalikan string asli
-                }
-                
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                
-                return `${hours}.${minutes}`;
-            } catch (e) {
-                console.error("Error formatting time:", e);
-                return timeString;
-            }
         }
         
         // Tambah anggota keluarga
@@ -255,8 +204,6 @@
                 // Tampilkan loading overlay
                 loadingOverlay.style.display = 'flex';
                 
-                console.log("Fetching data for ID:", id); // Debug log
-                
                 // Fetch data dari Google Apps Script
                 const response = await fetch(`${scriptURL}?action=getDataById&id=${id}`);
                 if (!response.ok) {
@@ -264,7 +211,6 @@
                 }
                 
                 const data = await response.json();
-                console.log("Data received:", data); // Debug log
                 
                 // Sembunyikan loading overlay
                 loadingOverlay.style.display = 'none';
@@ -281,10 +227,10 @@
                     return;
                 }
                 
-                // Isi form dengan data yang sudah diformat
+                // Isi form dengan data yang diterima langsung dari server
                 rowIdInput.value = id;
-                tanggalInput.value = formatDate(data[0]); // Format tanggal
-                waktuInput.value = formatTime(data[1]);   // Format waktu
+                tanggalInput.value = data[0] || ''; // Tanggal
+                waktuInput.value = data[1] || '';   // Waktu
                 namaKepalaInput.value = data[2] || ''; // Nama Kepala Keluarga
                 
                 // Isi anggota keluarga
@@ -358,16 +304,6 @@
             
             // Tampilkan loading overlay
             loadingOverlay.style.display = 'flex';
-            
-            console.log("Submitting data:", {
-                'action': 'update',
-                'id': id,
-                'tanggal': tanggal,
-                'waktu': waktu,
-                'namaKepala': namaKepala,
-                'anggotaKeluarga': anggotaKeluarga.join(', '),
-                'totalJiwa': totalJiwa
-            }); // Debug log
             
             // Kirim data ke Google Sheets
             fetch(scriptURL, {
