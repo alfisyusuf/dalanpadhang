@@ -125,12 +125,26 @@
         }
         
         .table-responsive {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            margin-bottom: 1rem;
             border-radius: 10px;
-            overflow: hidden;
+        }
+        
+        .table {
+            width: 100%;
+            white-space: nowrap;
         }
         
         .dataTables_wrapper {
             padding: 1rem;
+            overflow-x: auto;
+            width: 100%;
+        }
+        
+        .dataTables_wrapper .dataTables_scroll {
+            overflow: auto;
         }
         
         .badge-ring-1 {
@@ -685,6 +699,7 @@
         function initializeDataTables() {
             const dataTablesOptions = {
                 responsive: true,
+                scrollX: true,
                 language: {
                     search: "Cari:",
                     lengthMenu: "Tampilkan _MENU_ data",
@@ -850,17 +865,13 @@
         document.addEventListener('DOMContentLoaded', function() {
             processData();
             
-            // Add refresh button functionality
-            document.getElementById('refresh-btn').addEventListener('click', function() {
-                location.reload();
-            });
-        });
-        
-        // Add error handling for data loading
-        window.addEventListener('error', function(e) {
-            document.getElementById('loading').style.display = 'none';
-            alert('Terjadi kesalahan saat memuat halaman. Silakan coba lagi nanti.');
-            console.error('Error loading page:', e);
+            // Add refresh button functionality if it exists
+            const refreshBtn = document.getElementById('refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    location.reload();
+                });
+            }
         });
     </script>
 </body>
