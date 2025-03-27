@@ -53,66 +53,15 @@
             width: 3rem;
             height: 3rem;
         }
-        .btn-sm {
-            margin: 2px;
-        }
-        .total-card {
-            background-color: #17a2b8;
-            color: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .total-card h3 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
-        .total-card p {
-            margin: 0;
-            font-size: 2.5rem;
-            font-weight: bold;
-        }
-        .btn-info {
-            background-color: #17a2b8;
-            border-color: #17a2b8;
-            color: white;
-        }
-        .btn-info:hover {
-            background-color: #138496;
-            border-color: #138496;
-            color: white;
-        }
-        .btn-warning {
-            background-color: #fd7e14;
-            border-color: #fd7e14;
-            color: white;
-        }
-        .btn-warning:hover {
-            background-color: #e96b02;
-            border-color: #e96b02;
-            color: white;
-        }
-        .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-        .btn-danger:hover {
-            background-color: #c82333;
-            border-color: #c82333;
-            color: white;
+        .anggota-tooltip {
+            cursor: pointer;
+            color: #007bff;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1><i class="fas fa-list-alt"></i> Daftar Pemberi Zakat</h1>
-        
-        <div class="total-card">
-            <h3>Total Jiwa</h3>
-            <p id="totalJiwaKeseluruhan">0</p>
-        </div>
         
         <a href="index.html" class="btn btn-success">
             <i class="fas fa-plus-circle"></i> Tambah Data Baru
@@ -123,9 +72,10 @@
                 <thead class="table-dark">
                     <tr>
                         <th>No</th>
-                        <th>Nama</th>
-                        <th>Jiwa</th>
-                        <th>Aksi</th>
+                        <th>Tanggal & Waktu</th>
+                        <th>Nama Kepala Keluarga</th>
+                        <th>Anggota Keluarga</th>
+                        <th>Total Jiwa</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -148,12 +98,10 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Ganti URL ini dengan URL dari Google Apps Script web app Anda
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxB2SgxTi05wCa5IOCJ-ATbqaGj7JkSZ8tBn9g9qQMmGduqstJ_VJtoLt9_13YvjSIf/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyZJC0QKXDaQkN-pSgQa9c-nF1RGpJ4WAYaYEVNS-pgCof4HbeyztJx1NGCEHyMfuLE/exec';
         
         const tableBody = document.getElementById('tableBody');
         const loadingOverlay = document.getElementById('loadingOverlay');
-        const totalJiwaKeseluruhan = document.getElementById('totalJiwaKeseluruhan');
-        let dataTable;
         
         // Fungsi untuk memuat data dari Google Sheets
         async function loadData() {
@@ -163,12 +111,7 @@
                 
                 // Fetch data dari Google Apps Script
                 const response = await fetch(scriptURL + '?action=getData');
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.statusText);
-                }
-                
                 const data = await response.json();
-                console.log("Data received:", data); // Debug log
                 
                 // Sembunyikan loading overlay
                 loadingOverlay.style.display = 'none';
@@ -176,200 +119,61 @@
                 // Hapus header (baris pertama) dari data
                 const rows = data.slice(1);
                 
-                // Hitung total jiwa keseluruhan
-                let totalJiwa = 0;
-                rows.forEach(row => {
-                    totalJiwa += parseInt(row[4] || 0); // Total jiwa ada di kolom ke-5 (indeks 4)
-                });
-                totalJiwaKeseluruhan.textContent = totalJiwa;
-                
                 // Isi tabel dengan data
                 tableBody.innerHTML = '';
                 rows.forEach((row, index) => {
-                    const [tanggal, waktu, namaKepala, anggotaKeluarga, jiwa] = row;
+                    const [tanggal, waktu, namaKepala, anggotaKeluarga, totalJiwa] = row;
+                    
+                    // Buat array dari anggota keluarga (jika ada)
+                    let anggotaArray = [];
+                    if (anggotaKeluarga) {
+                        anggotaArray = anggotaKeluarga.split(', ');
+                    }
+                    
+                    // Tentukan tampilan anggota keluarga
+                    let anggotaDisplay = '';
+                    if (anggotaArray.length > 0) {
+                        if (anggotaArray.length <= 2) {
+                            anggotaDisplay = anggotaKeluarga;
+                        } else {
+                            anggotaDisplay = `<span class="anggota-tooltip" data-anggota="${anggotaKeluarga}">${anggotaArray.length} anggota keluarga</span>`;
+                        }
+                    } else {
+                        anggotaDisplay = '-';
+                    }
                     
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${index + 1}</td>
-                        <td>${namaKepala || ''}</td>
-                        <td><span class="badge-success">${jiwa || '0'}</span></td>
-                        <td>
-                            <button class="btn btn-info btn-sm detail-btn" data-id="${index + 1}">
-                                <i class="fas fa-eye"></i> Detail
-                            </button>
-                            <a href="edit.html?id=${index + 1}" class="btn btn-warning btn-sm">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <button class="btn btn-danger btn-sm delete-btn" data-id="${index + 1}" data-nama="${namaKepala || 'Tidak ada nama'}">
-                                <i class="fas fa-trash"></i> Hapus
-                            </button>
-                        </td>
+                        <td>${tanggal} ${waktu}</td>
+                        <td>${namaKepala}</td>
+                        <td>${anggotaDisplay}</td>
+                        <td><span class="badge-success">${totalJiwa}</span></td>
                     `;
                     tableBody.appendChild(tr);
                 });
                 
-                // Hancurkan DataTable jika sudah ada
-                if (dataTable) {
-                    dataTable.destroy();
-                }
-                
                 // Inisialisasi DataTable
-                dataTable = $('#zakatTable').DataTable({
+                $('#zakatTable').DataTable({
                     responsive: true,
                     language: {
                         url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
-                    }
-                });
-                
-                // Tambahkan event listener untuk tombol detail
-                document.querySelectorAll('.detail-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const id = this.getAttribute('data-id');
-                        showDetailData(id);
-                    });
-                });
-                
-                // Tambahkan event listener untuk tombol hapus
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const id = this.getAttribute('data-id');
-                        const nama = this.getAttribute('data-nama');
-                        confirmDelete(id, nama);
-                    });
-                });
-                
-            } catch (error) {
-                // Sembunyikan loading overlay
-                loadingOverlay.style.display = 'none';
-                
-                // Tampilkan pesan error
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Terjadi kesalahan saat memuat data: ' + error.message,
-                    confirmButtonColor: '#dc3545'
-                });
-                console.error('Error!', error);
-            }
-        }
-        
-        // Fungsi untuk menampilkan detail data
-        async function showDetailData(id) {
-            try {
-                // Tampilkan loading overlay
-                loadingOverlay.style.display = 'flex';
-                
-                // Fetch data dari Google Apps Script
-                const response = await fetch(`${scriptURL}?action=getDataById&id=${id}`);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.statusText);
-                }
-                
-                const data = await response.json();
-                console.log("Detail data:", data); // Debug log
-                
-                // Sembunyikan loading overlay
-                loadingOverlay.style.display = 'none';
-                
-                if (!data) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Oops...',
-                        text: 'Data tidak ditemukan!',
-                        confirmButtonColor: '#dc3545'
-                    });
-                    return;
-                }
-                
-                const [tanggal, waktu, namaKepala, anggotaKeluarga, totalJiwa] = data;
-                
-                // Buat daftar anggota keluarga
-                let anggotaList = '';
-                if (anggotaKeluarga) {
-                    const anggotaArray = anggotaKeluarga.split(', ');
-                    anggotaList = anggotaArray.map(item => `<li>${item}</li>`).join('');
-                } else {
-                    anggotaList = '<li>Tidak ada anggota keluarga</li>';
-                }
-                
-                // Tampilkan detail data
-                Swal.fire({
-                    title: `Detail Zakat: ${namaKepala || 'Tidak ada nama'}`,
-                    html: `
-                        <div style="text-align: left;">
-                            <p><strong>Tanggal & Waktu:</strong> ${tanggal || '-'} ${waktu || '-'}</p>
-                            <p><strong>Nama Kepala Keluarga:</strong> ${namaKepala || 'Tidak ada nama'}</p>
-                            <p><strong>Total Jiwa:</strong> ${totalJiwa || '0'}</p>
-                            <p><strong>Anggota Keluarga:</strong></p>
-                            <ul>${anggotaList}</ul>
-                        </div>
-                    `,
-                    confirmButtonColor: '#17a2b8'
-                });
-                
-            } catch (error) {
-                // Sembunyikan loading overlay
-                loadingOverlay.style.display = 'none';
-                
-                // Tampilkan pesan error
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Oops...',
-                    text: 'Terjadi kesalahan saat memuat detail data: ' + error.message,
-                    confirmButtonColor: '#dc3545'
-                });
-                console.error('Error!', error);
-            }
-        }
-        
-        // Fungsi untuk konfirmasi hapus data
-        function confirmDelete(id, nama) {
-            Swal.fire({
-                title: 'Apakah Anda yakin?',
-                text: `Data zakat untuk ${nama} akan dihapus!`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, hapus!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    deleteData(id);
-                }
-            });
-        }
-        
-        // Fungsi untuk menghapus data
-        async function deleteData(id) {
-            try {
-                // Tampilkan loading overlay
-                loadingOverlay.style.display = 'flex';
-                
-                // Kirim permintaan hapus ke Google Apps Script
-                const response = await fetch(scriptURL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: new URLSearchParams({
-                        'action': 'delete',
-                        'id': id
-                    })
+                    order: [[1, 'desc']] // Urutkan berdasarkan tanggal & waktu (kolom kedua)
                 });
                 
-                // Sembunyikan loading overlay
-                loadingOverlay.style.display = 'none';
-                
-                // Tampilkan pesan sukses
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: 'Data zakat berhasil dihapus.',
-                    confirmButtonColor: '#28a745'
-                }).then(() => {
-                    // Muat ulang data
-                    loadData();
+                // Tambahkan event listener untuk tooltip anggota keluarga
+                document.querySelectorAll('.anggota-tooltip').forEach(tooltip => {
+                    tooltip.addEventListener('click', function() {
+                        const anggota = this.getAttribute('data-anggota');
+                        const anggotaList = anggota.split(', ').map(item => `<li>${item}</li>`).join('');
+                        
+                        Swal.fire({
+                            title: 'Daftar Anggota Keluarga',
+                            html: `<ul style="text-align: left;">${anggotaList}</ul>`,
+                            confirmButtonColor: '#28a745'
+                        });
+                    });
                 });
                 
             } catch (error) {
@@ -380,7 +184,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Terjadi kesalahan saat menghapus data: ' + error.message,
+                    text: 'Terjadi kesalahan saat memuat data.',
                     confirmButtonColor: '#dc3545'
                 });
                 console.error('Error!', error);

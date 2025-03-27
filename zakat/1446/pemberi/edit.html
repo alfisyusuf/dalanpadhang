@@ -81,13 +81,13 @@
             <input type="hidden" id="rowId">
             
             <div class="mb-3">
-                <label for="tanggal" class="form-label">Tanggal (DD/MM/YYYY)</label>
-                <input type="text" class="form-control" id="tanggal" placeholder="contoh: 27/03/2025" required>
+                <label for="tanggal" class="form-label">Tanggal</label>
+                <input type="text" class="form-control" id="tanggal" required>
             </div>
             
             <div class="mb-3">
-                <label for="waktu" class="form-label">Waktu (HH.MM)</label>
-                <input type="text" class="form-control" id="waktu" placeholder="contoh: 16.21" required>
+                <label for="waktu" class="form-label">Waktu</label>
+                <input type="text" class="form-control" id="waktu" required>
             </div>
             
             <div class="mb-3">
@@ -131,7 +131,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Ganti URL ini dengan URL dari Google Apps Script web app Anda
-        const scriptURL = 'GANTI_DENGAN_URL_GOOGLE_SCRIPT_WEB_APP_ANDA';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyZJC0QKXDaQkN-pSgQa9c-nF1RGpJ4WAYaYEVNS-pgCof4HbeyztJx1NGCEHyMfuLE/exec';
         
         const rowIdInput = document.getElementById('rowId');
         const tanggalInput = document.getElementById('tanggal');
@@ -206,10 +206,6 @@
                 
                 // Fetch data dari Google Apps Script
                 const response = await fetch(`${scriptURL}?action=getDataById&id=${id}`);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.statusText);
-                }
-                
                 const data = await response.json();
                 
                 // Sembunyikan loading overlay
@@ -227,22 +223,19 @@
                     return;
                 }
                 
-                // Isi form dengan data yang diterima langsung dari server
+                // Isi form dengan data
                 rowIdInput.value = id;
-                tanggalInput.value = data[0] || ''; // Tanggal
-                waktuInput.value = data[1] || '';   // Waktu
-                namaKepalaInput.value = data[2] || ''; // Nama Kepala Keluarga
+                tanggalInput.value = data[0]; // Tanggal
+                waktuInput.value = data[1];   // Waktu
+                namaKepalaInput.value = data[2]; // Nama Kepala Keluarga
                 
                 // Isi anggota keluarga
                 if (data[3]) {
                     anggotaKeluarga = data[3].split(', ');
                     renderAnggotaList();
-                } else {
-                    anggotaKeluarga = [];
-                    renderAnggotaList();
                 }
                 
-                totalJiwaInput.value = data[4] || '1'; // Total Jiwa
+                totalJiwaInput.value = data[4]; // Total Jiwa
                 
             } catch (error) {
                 // Sembunyikan loading overlay
@@ -252,7 +245,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Terjadi kesalahan saat memuat data: ' + error.message,
+                    text: 'Terjadi kesalahan saat memuat data.',
                     confirmButtonColor: '#dc3545'
                 });
                 console.error('Error!', error);
@@ -269,30 +262,6 @@
             const namaKepala = namaKepalaInput.value.trim();
             const totalJiwa = totalJiwaInput.value;
             
-            // Validasi format tanggal (DD/MM/YYYY)
-            const tanggalRegex = /^\d{2}\/\d{2}\/\d{4}$/;
-            if (!tanggalRegex.test(tanggal)) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Format Tanggal Salah',
-                    text: 'Masukkan tanggal dengan format DD/MM/YYYY (contoh: 27/03/2025)',
-                    confirmButtonColor: '#dc3545'
-                });
-                return;
-            }
-            
-            // Validasi format waktu (HH.MM)
-            const waktuRegex = /^\d{2}\.\d{2}$/;
-            if (!waktuRegex.test(waktu)) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Format Waktu Salah',
-                    text: 'Masukkan waktu dengan format HH.MM (contoh: 16.21)',
-                    confirmButtonColor: '#dc3545'
-                });
-                return;
-            }
-            
             if (!namaKepala) {
                 Swal.fire({
                     icon: 'error',
@@ -308,6 +277,7 @@
             // Kirim data ke Google Sheets
             fetch(scriptURL, {
                 method: 'POST',
+                mode: 'no-cors',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
@@ -320,12 +290,6 @@
                     'anggotaKeluarga': anggotaKeluarga.join(', '),
                     'totalJiwa': totalJiwa
                 })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.statusText);
-                }
-                return response;
             })
             .then(() => {
                 // Sembunyikan loading overlay
@@ -350,10 +314,10 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Terjadi kesalahan saat memperbarui data: ' + error.message,
+                    text: 'Terjadi kesalahan saat memperbarui data.',
                     confirmButtonColor: '#dc3545'
                 });
-                console.error('Error!', error);
+                console.error('Error!', error.message);
             });
         });
         
