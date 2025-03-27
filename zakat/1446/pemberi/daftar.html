@@ -148,52 +148,12 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Ganti URL ini dengan URL dari Google Apps Script web app Anda
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxL7H5Q64GAUa7jEccIPZYd4cfkLYWF_3fYcQEAdC802rKm5T-3hs-ussZaRpUPsyVo/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxB2SgxTi05wCa5IOCJ-ATbqaGj7JkSZ8tBn9g9qQMmGduqstJ_VJtoLt9_13YvjSIf/exec';
         
         const tableBody = document.getElementById('tableBody');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const totalJiwaKeseluruhan = document.getElementById('totalJiwaKeseluruhan');
-        
-        // Fungsi untuk memformat tanggal dari format ISO ke format DD/MM/YYYY
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            
-            // Cek apakah tanggal sudah dalam format DD/MM/YYYY
-            if (dateString.includes('/')) {
-                return dateString;
-            }
-            
-            try {
-                const date = new Date(dateString);
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                
-                return `${day}/${month}/${year}`;
-            } catch (e) {
-                return dateString;
-            }
-        }
-    
-        // Fungsi untuk memformat waktu
-        function formatTime(timeString) {
-            if (!timeString) return '';
-            
-            // Cek apakah waktu sudah dalam format HH.MM
-            if (timeString.includes('.')) {
-                return timeString;
-            }
-            
-            try {
-                const date = new Date(timeString);
-                const hours = date.getHours().toString().padStart(2, '0');
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                
-                return `${hours}.${minutes}`;
-            } catch (e) {
-                return timeString;
-            }
-        }
+        let dataTable;
         
         // Fungsi untuk memuat data dari Google Sheets
         async function loadData() {
@@ -203,7 +163,12 @@
                 
                 // Fetch data dari Google Apps Script
                 const response = await fetch(scriptURL + '?action=getData');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                
                 const data = await response.json();
+                console.log("Data received:", data); // Debug log
                 
                 // Sembunyikan loading overlay
                 loadingOverlay.style.display = 'none';
@@ -226,8 +191,8 @@
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${index + 1}</td>
-                        <td>${namaKepala}</td>
-                        <td><span class="badge-success">${jiwa}</span></td>
+                        <td>${namaKepala || ''}</td>
+                        <td><span class="badge-success">${jiwa || '0'}</span></td>
                         <td>
                             <button class="btn btn-info btn-sm detail-btn" data-id="${index + 1}">
                                 <i class="fas fa-eye"></i> Detail
@@ -235,7 +200,7 @@
                             <a href="edit.html?id=${index + 1}" class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i> Edit
                             </a>
-                            <button class="btn btn-danger btn-sm delete-btn" data-id="${index + 1}" data-nama="${namaKepala}">
+                            <button class="btn btn-danger btn-sm delete-btn" data-id="${index + 1}" data-nama="${namaKepala || 'Tidak ada nama'}">
                                 <i class="fas fa-trash"></i> Hapus
                             </button>
                         </td>
@@ -243,8 +208,13 @@
                     tableBody.appendChild(tr);
                 });
                 
+                // Hancurkan DataTable jika sudah ada
+                if (dataTable) {
+                    dataTable.destroy();
+                }
+                
                 // Inisialisasi DataTable
-                $('#zakatTable').DataTable({
+                dataTable = $('#zakatTable').DataTable({
                     responsive: true,
                     language: {
                         url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
@@ -276,7 +246,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Terjadi kesalahan saat memuat data.',
+                    text: 'Terjadi kesalahan saat memuat data: ' + error.message,
                     confirmButtonColor: '#dc3545'
                 });
                 console.error('Error!', error);
@@ -291,7 +261,12 @@
                 
                 // Fetch data dari Google Apps Script
                 const response = await fetch(`${scriptURL}?action=getDataById&id=${id}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                
                 const data = await response.json();
+                console.log("Detail data:", data); // Debug log
                 
                 // Sembunyikan loading overlay
                 loadingOverlay.style.display = 'none';
@@ -317,14 +292,14 @@
                     anggotaList = '<li>Tidak ada anggota keluarga</li>';
                 }
                 
-                // Tampilkan detail data dengan format tanggal dan waktu yang benar
+                // Tampilkan detail data
                 Swal.fire({
-                    title: `Detail Zakat: ${namaKepala}`,
+                    title: `Detail Zakat: ${namaKepala || 'Tidak ada nama'}`,
                     html: `
                         <div style="text-align: left;">
-                            <p><strong>Tanggal & Waktu:</strong> ${formatDate(tanggal)} ${formatTime(waktu)}</p>
-                            <p><strong>Nama Kepala Keluarga:</strong> ${namaKepala}</p>
-                            <p><strong>Total Jiwa:</strong> ${totalJiwa}</p>
+                            <p><strong>Tanggal & Waktu:</strong> ${tanggal || '-'} ${waktu || '-'}</p>
+                            <p><strong>Nama Kepala Keluarga:</strong> ${namaKepala || 'Tidak ada nama'}</p>
+                            <p><strong>Total Jiwa:</strong> ${totalJiwa || '0'}</p>
                             <p><strong>Anggota Keluarga:</strong></p>
                             <ul>${anggotaList}</ul>
                         </div>
@@ -340,7 +315,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Terjadi kesalahan saat memuat detail data.',
+                    text: 'Terjadi kesalahan saat memuat detail data: ' + error.message,
                     confirmButtonColor: '#dc3545'
                 });
                 console.error('Error!', error);
@@ -372,9 +347,8 @@
                 loadingOverlay.style.display = 'flex';
                 
                 // Kirim permintaan hapus ke Google Apps Script
-                await fetch(scriptURL, {
+                const response = await fetch(scriptURL, {
                     method: 'POST',
-                    mode: 'no-cors',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
@@ -406,7 +380,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Terjadi kesalahan saat menghapus data.',
+                    text: 'Terjadi kesalahan saat menghapus data: ' + error.message,
                     confirmButtonColor: '#dc3545'
                 });
                 console.error('Error!', error);
@@ -415,6 +389,6 @@
         
         // Muat data saat halaman dimuat
         document.addEventListener('DOMContentLoaded', loadData);
-    </script>    
+    </script>
 </body>
 </html>

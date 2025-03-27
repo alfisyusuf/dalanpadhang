@@ -131,7 +131,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Ganti URL ini dengan URL dari Google Apps Script web app Anda
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxL7H5Q64GAUa7jEccIPZYd4cfkLYWF_3fYcQEAdC802rKm5T-3hs-ussZaRpUPsyVo/exec';
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxB2SgxTi05wCa5IOCJ-ATbqaGj7JkSZ8tBn9g9qQMmGduqstJ_VJtoLt9_13YvjSIf/exec';
         
         const rowIdInput = document.getElementById('rowId');
         const tanggalInput = document.getElementById('tanggal');
@@ -172,12 +172,17 @@
             
             try {
                 const date = new Date(dateString);
+                if (isNaN(date.getTime())) {
+                    return dateString; // Jika tanggal tidak valid, kembalikan string asli
+                }
+                
                 const day = date.getDate().toString().padStart(2, '0');
                 const month = (date.getMonth() + 1).toString().padStart(2, '0');
                 const year = date.getFullYear();
                 
                 return `${day}/${month}/${year}`;
             } catch (e) {
+                console.error("Error formatting date:", e);
                 return dateString;
             }
         }
@@ -193,11 +198,16 @@
             
             try {
                 const date = new Date(timeString);
+                if (isNaN(date.getTime())) {
+                    return timeString; // Jika waktu tidak valid, kembalikan string asli
+                }
+                
                 const hours = date.getHours().toString().padStart(2, '0');
                 const minutes = date.getMinutes().toString().padStart(2, '0');
                 
                 return `${hours}.${minutes}`;
             } catch (e) {
+                console.error("Error formatting time:", e);
                 return timeString;
             }
         }
@@ -245,9 +255,16 @@
                 // Tampilkan loading overlay
                 loadingOverlay.style.display = 'flex';
                 
+                console.log("Fetching data for ID:", id); // Debug log
+                
                 // Fetch data dari Google Apps Script
                 const response = await fetch(`${scriptURL}?action=getDataById&id=${id}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                
                 const data = await response.json();
+                console.log("Data received:", data); // Debug log
                 
                 // Sembunyikan loading overlay
                 loadingOverlay.style.display = 'none';
@@ -268,15 +285,18 @@
                 rowIdInput.value = id;
                 tanggalInput.value = formatDate(data[0]); // Format tanggal
                 waktuInput.value = formatTime(data[1]);   // Format waktu
-                namaKepalaInput.value = data[2]; // Nama Kepala Keluarga
+                namaKepalaInput.value = data[2] || ''; // Nama Kepala Keluarga
                 
                 // Isi anggota keluarga
                 if (data[3]) {
                     anggotaKeluarga = data[3].split(', ');
                     renderAnggotaList();
+                } else {
+                    anggotaKeluarga = [];
+                    renderAnggotaList();
                 }
                 
-                totalJiwaInput.value = data[4]; // Total Jiwa
+                totalJiwaInput.value = data[4] || '1'; // Total Jiwa
                 
             } catch (error) {
                 // Sembunyikan loading overlay
@@ -286,7 +306,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Terjadi kesalahan saat memuat data.',
+                    text: 'Terjadi kesalahan saat memuat data: ' + error.message,
                     confirmButtonColor: '#dc3545'
                 });
                 console.error('Error!', error);
@@ -339,10 +359,19 @@
             // Tampilkan loading overlay
             loadingOverlay.style.display = 'flex';
             
+            console.log("Submitting data:", {
+                'action': 'update',
+                'id': id,
+                'tanggal': tanggal,
+                'waktu': waktu,
+                'namaKepala': namaKepala,
+                'anggotaKeluarga': anggotaKeluarga.join(', '),
+                'totalJiwa': totalJiwa
+            }); // Debug log
+            
             // Kirim data ke Google Sheets
             fetch(scriptURL, {
                 method: 'POST',
-                mode: 'no-cors',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
@@ -355,6 +384,12 @@
                     'anggotaKeluarga': anggotaKeluarga.join(', '),
                     'totalJiwa': totalJiwa
                 })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response;
             })
             .then(() => {
                 // Sembunyikan loading overlay
@@ -379,10 +414,10 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
-                    text: 'Terjadi kesalahan saat memperbarui data.',
+                    text: 'Terjadi kesalahan saat memperbarui data: ' + error.message,
                     confirmButtonColor: '#dc3545'
                 });
-                console.error('Error!', error.message);
+                console.error('Error!', error);
             });
         });
         
