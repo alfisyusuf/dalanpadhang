@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cetak Daftar Penerima Zakat</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f8fa;
+            color: #2c3e50;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 2px solid #2c3e50;
+        }
+        
+        .header h1 {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .print-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .table th {
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+        
+        .badge-ring-1 {
+            background-color: #e74c3c;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .badge-ring-2 {
+            background-color: #f39c12;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .badge-ring-3 {
+            background-color: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .summary-card {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        
+        .btn-print {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        
+        .btn-print:hover {
+            background-color: #1a252f;
+        }
+        
+        .btn-back {
+            background-color: #7f8c8d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        
+        .btn-back:hover {
+            background-color: #6c7a7d;
+        }
+        
+        .action-buttons {
+            margin-bottom: 30px;
+        }
+        
+        .page-break {
+            page-break-after: always;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+            }
+            
+            .print-container {
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .action-buttons, .no-print {
+                display: none !important;
+            }
+            
+            .header {
+                margin-bottom: 20px;
+            }
+            
+            .table {
+                font-size: 12px;
+            }
+            
+            .footer {
+                margin-top: 20px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        
+        <div id="content" style="display: none;">
+            <!-- Action Buttons -->
+            <div class="action-buttons no-print">
+                <a href="index.html" class="btn btn-back">
+                    <i class="fas fa-arrow-left me-2"></i> Kembali
+                </a>
+                <button id="print-btn" class="btn btn-print">
+                    <i class="fas fa-print me-2"></i> Cetak Dokumen
+                </button>
+            </div>
+            
+            <!-- Header -->
+            <div class="header">
+                <h1>Daftar Penerima Zakat</h1>
+                <p id="current-date">Tanggal: </p>
+            </div>
+            
+            <!-- Summary Section -->
+            <div class="print-container">
+                <h3 class="section-title">Ringkasan</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="summary-card">
+                            <h5 class="summary-title">Total Keseluruhan</h5>
+                            <div class="summary-item">
+                                <span>Total Penerima:</span>
+                                <span id="total-penerima">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Total Jiwa:</span>
+                                <span id="total-jiwa">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Total Paket:</span>
+                                <span id="total-paket">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="summary-card">
+                                    <h5 class="summary-title">Distribusi per Ring</h5>
+                                    <div class="summary-item">
+                                        <span>Ring 1:</span>
+                                        <span id="ring1-count">0</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span>Ring 2:</span>
+                                        <span id="ring2-count">0</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span>Ring 3:</span>
+                                        <span id="ring3-count">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ring 1 Table -->
+            <div class="print-container">
+                <h3 class="section-title">Daftar Penerima Ring 1</h3>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="ring1Table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>ID</th>
+                                <th>Nama Kepala Keluarga</th>
+                                <th>Jumlah Jiwa</th>
+                                <th>Jumlah Paket</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ring1TableBody">
+                            <!-- Data akan diisi melalui JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <th colspan="3" class="text-end">Total:</th>
+                                <th id="ring1-jiwa">0</th>
+                                <th id="ring1-paket">0</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Page Break for printing -->
+            <div class="page-break"></div>
+            
+            <!-- Ring 2 Table -->
+            <div class="print-container">
+                <h3 class="section-title">Daftar Penerima Ring 2</h3>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="ring2Table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>ID</th>
+                                <th>Nama Kepala Keluarga</th>
+                                <th>Jumlah Jiwa</th>
+                                <th>Jumlah Paket</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ring2TableBody">
+                            <!-- Data akan diisi melalui JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <th colspan="3" class="text-end">Total:</th>
+                                <th id="ring2-jiwa">0</th>
+                                <th id="ring2-paket">0</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Page Break for printing -->
+            <div class="page-break"></div>
+            
+            <!-- Ring 3 Table -->
+            <div class="print-container">
+                <h3 class="section-title">Daftar Penerima Ring 3</h3>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="ring3Table">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>ID</th>
+                                <th>Nama Kepala Keluarga</th>
+                                <th>Jumlah Jiwa</th>
+                                <th>Jumlah Paket</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ring3TableBody">
+                            <!-- Data akan diisi melalui JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <th colspan="3" class="text-end">Total:</th>
+                                <th id="ring3-jiwa">0</th>
+                                <th id="ring3-paket">0</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="footer">
+                <p>© 2023 Sistem Informasi Penerima Zakat | Dokumen ini dicetak pada <span id="print-date"></span></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Set current date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').textContent = 'Tanggal: ' + new Date().toLocaleDateString('id-ID', options);
+        document.getElementById('print-date').textContent = new Date().toLocaleDateString('id-ID', options) + ' ' + new Date().toLocaleTimeString('id-ID');
+        
+        // Fetch data from Google Apps Script
+        async function fetchData() {
+            try {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbxUyRvdQPV1VnFEmtF1TGSjlG9a_TvCjx7qIX29DILwObwIMMePW8XS97k0qXCHTDjd/exec');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('Terjadi kesalahan saat mengambil data. Silakan coba lagi nanti.');
+                return [];
+            }
+        }
+        
+        // Process and display data
+        async function processData() {
+            const data = await fetchData();
+            
+            if (data.length === 0) {
+                document.getElementById('loading').style.display = 'none';
+                alert('Tidak ada data yang ditemukan.');
+                return;
+            }
+            
+            // Hide loading spinner and show content
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            
+            // Filter data by ring
+            const ring1Data = data.filter(item => item.Ring === 1);
+            const ring2Data = data.filter(item => item.Ring === 2);
+            const ring3Data = data.filter(item => item.Ring === 3);
+            
+            // Calculate statistics
+            const totalPenerima = data.length;
+            const totalJiwa = data.reduce((sum, item) => sum + item.Jiwa, 0);
+            const totalPaket = data.reduce((sum, item) => sum + item["Jumlah Paket"], 0);
+            
+            const ring1Count = ring1Data.length;
+            const ring1Jiwa = ring1Data.reduce((sum, item) => sum + item.Jiwa, 0);
+            const ring1Paket = ring1Data.reduce((sum, item) => sum + item["Jumlah Paket"], 0);
+            
+            const ring2Count = ring2Data.length;
+            const ring2Jiwa = ring2Data.reduce((sum, item) => sum + item.Jiwa, 0);
+            const ring2Paket = ring2Data.reduce((sum, item) => sum + item["Jumlah Paket"], 0);
+            
+            const ring3Count = ring3Data.length;
+            const ring3Jiwa = ring3Data.reduce((sum, item) => sum + item.Jiwa, 0);
+            const ring3Paket = ring3Data.reduce((sum, item) => sum + item["Jumlah Paket"], 0);
+            
+            // Update statistics in the UI
+            document.getElementById('total-penerima').textContent = totalPenerima;
+            document.getElementById('total-jiwa').textContent = totalJiwa;
+            document.getElementById('total-paket').textContent = totalPaket;
+            
+            document.getElementById('ring1-count').textContent = ring1Count;
+            document.getElementById('ring1-jiwa').textContent = ring1Jiwa;
+            document.getElementById('ring1-paket').textContent = ring1Paket;
+            
+            document.getElementById('ring2-count').textContent = ring2Count;
+            document.getElementById('ring2-jiwa').textContent = ring2Jiwa;
+            document.getElementById('ring2-paket').textContent = ring2Paket;
+            
+            document.getElementById('ring3-count').textContent = ring3Count;
+            document.getElementById('ring3-jiwa').textContent = ring3Jiwa;
+            document.getElementById('ring3-paket').textContent = ring3Paket;
+            
+            // Populate tables
+            populateTable('ring1TableBody', ring1Data);
+            populateTable('ring2TableBody', ring2Data);
+            populateTable('ring3TableBody', ring3Data);
+        }
+        
+        // Populate table with data
+        function populateTable(tableId, data) {
+            const tableBody = document.getElementById(tableId);
+            tableBody.innerHTML = '';
+            
+            data.forEach((item, index) => {
+                const row = document.createElement('tr');
+                
+                // Create No. cell
+                const noCell = document.createElement('td');
+                noCell.textContent = index + 1;
+                row.appendChild(noCell);
+                
+                // Create ID cell
+                const idCell = document.createElement('td');
+                idCell.textContent = item.ID;
+                row.appendChild(idCell);
+                
+                // Create Name cell
+                const nameCell = document.createElement('td');
+                nameCell.textContent = item["Nama Kepala Keluarga"];
+                row.appendChild(nameCell);
+                
+                // Create Jiwa cell
+                const jiwaCell = document.createElement('td');
+                jiwaCell.textContent = item.Jiwa;
+                jiwaCell.className = 'text-center';
+                row.appendChild(jiwaCell);
+                
+                // Create Paket cell
+                const paketCell = document.createElement('td');
+                paketCell.textContent = item["Jumlah Paket"];
+                paketCell.className = 'text-center';
+                row.appendChild(paketCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Add print button functionality
+        document.getElementById('print-btn').addEventListener('click', function() {
+            window.print();
+        });
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            processData();
+        });
+    </script>
+</body>
+</html>
