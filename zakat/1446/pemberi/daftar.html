@@ -154,6 +154,47 @@
         const loadingOverlay = document.getElementById('loadingOverlay');
         const totalJiwaKeseluruhan = document.getElementById('totalJiwaKeseluruhan');
         
+        // Fungsi untuk memformat tanggal dari format ISO ke format DD/MM/YYYY
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            
+            // Cek apakah tanggal sudah dalam format DD/MM/YYYY
+            if (dateString.includes('/')) {
+                return dateString;
+            }
+            
+            try {
+                const date = new Date(dateString);
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                
+                return `${day}/${month}/${year}`;
+            } catch (e) {
+                return dateString;
+            }
+        }
+    
+        // Fungsi untuk memformat waktu
+        function formatTime(timeString) {
+            if (!timeString) return '';
+            
+            // Cek apakah waktu sudah dalam format HH.MM
+            if (timeString.includes('.')) {
+                return timeString;
+            }
+            
+            try {
+                const date = new Date(timeString);
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                
+                return `${hours}.${minutes}`;
+            } catch (e) {
+                return timeString;
+            }
+        }
+        
         // Fungsi untuk memuat data dari Google Sheets
         async function loadData() {
             try {
@@ -276,12 +317,12 @@
                     anggotaList = '<li>Tidak ada anggota keluarga</li>';
                 }
                 
-                // Tampilkan detail data
+                // Tampilkan detail data dengan format tanggal dan waktu yang benar
                 Swal.fire({
                     title: `Detail Zakat: ${namaKepala}`,
                     html: `
                         <div style="text-align: left;">
-                            <p><strong>Tanggal & Waktu:</strong> ${tanggal} ${waktu}</p>
+                            <p><strong>Tanggal & Waktu:</strong> ${formatDate(tanggal)} ${formatTime(waktu)}</p>
                             <p><strong>Nama Kepala Keluarga:</strong> ${namaKepala}</p>
                             <p><strong>Total Jiwa:</strong> ${totalJiwa}</p>
                             <p><strong>Anggota Keluarga:</strong></p>
@@ -374,6 +415,6 @@
         
         // Muat data saat halaman dimuat
         document.addEventListener('DOMContentLoaded', loadData);
-    </script>
+    </script>    
 </body>
 </html>

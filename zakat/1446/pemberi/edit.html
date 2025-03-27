@@ -81,13 +81,13 @@
             <input type="hidden" id="rowId">
             
             <div class="mb-3">
-                <label for="tanggal" class="form-label">Tanggal</label>
-                <input type="text" class="form-control" id="tanggal" required>
+                <label for="tanggal" class="form-label">Tanggal (DD/MM/YYYY)</label>
+                <input type="text" class="form-control" id="tanggal" placeholder="contoh: 27/03/2025" required>
             </div>
             
             <div class="mb-3">
-                <label for="waktu" class="form-label">Waktu</label>
-                <input type="text" class="form-control" id="waktu" required>
+                <label for="waktu" class="form-label">Waktu (HH.MM)</label>
+                <input type="text" class="form-control" id="waktu" placeholder="contoh: 16.21" required>
             </div>
             
             <div class="mb-3">
@@ -161,6 +161,47 @@
             totalJiwaInput.value = total;
         }
         
+        // Fungsi untuk memformat tanggal dari format ISO ke format DD/MM/YYYY
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            
+            // Cek apakah tanggal sudah dalam format DD/MM/YYYY
+            if (dateString.includes('/')) {
+                return dateString;
+            }
+            
+            try {
+                const date = new Date(dateString);
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                
+                return `${day}/${month}/${year}`;
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        // Fungsi untuk memformat waktu
+        function formatTime(timeString) {
+            if (!timeString) return '';
+            
+            // Cek apakah waktu sudah dalam format HH.MM
+            if (timeString.includes('.')) {
+                return timeString;
+            }
+            
+            try {
+                const date = new Date(timeString);
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                
+                return `${hours}.${minutes}`;
+            } catch (e) {
+                return timeString;
+            }
+        }
+        
         // Tambah anggota keluarga
         tambahAnggotaBtn.addEventListener('click', function() {
             const nama = anggotaInput.value.trim();
@@ -223,10 +264,10 @@
                     return;
                 }
                 
-                // Isi form dengan data
+                // Isi form dengan data yang sudah diformat
                 rowIdInput.value = id;
-                tanggalInput.value = data[0]; // Tanggal
-                waktuInput.value = data[1];   // Waktu
+                tanggalInput.value = formatDate(data[0]); // Format tanggal
+                waktuInput.value = formatTime(data[1]);   // Format waktu
                 namaKepalaInput.value = data[2]; // Nama Kepala Keluarga
                 
                 // Isi anggota keluarga
@@ -261,6 +302,30 @@
             const waktu = waktuInput.value;
             const namaKepala = namaKepalaInput.value.trim();
             const totalJiwa = totalJiwaInput.value;
+            
+            // Validasi format tanggal (DD/MM/YYYY)
+            const tanggalRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+            if (!tanggalRegex.test(tanggal)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Format Tanggal Salah',
+                    text: 'Masukkan tanggal dengan format DD/MM/YYYY (contoh: 27/03/2025)',
+                    confirmButtonColor: '#dc3545'
+                });
+                return;
+            }
+            
+            // Validasi format waktu (HH.MM)
+            const waktuRegex = /^\d{2}\.\d{2}$/;
+            if (!waktuRegex.test(waktu)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Format Waktu Salah',
+                    text: 'Masukkan waktu dengan format HH.MM (contoh: 16.21)',
+                    confirmButtonColor: '#dc3545'
+                });
+                return;
+            }
             
             if (!namaKepala) {
                 Swal.fire({
