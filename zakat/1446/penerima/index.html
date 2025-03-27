@@ -144,7 +144,7 @@
         }
         
         .dataTables_wrapper .dataTables_scroll {
-            overflow: auto;
+            overflow: visible;
         }
         
         .badge-ring-1 {
@@ -193,24 +193,6 @@
             height: 3rem;
         }
         
-        @media (max-width: 768px) {
-            .header {
-                padding: 1.5rem 0;
-            }
-            
-            .stats-card .icon {
-                font-size: 2rem;
-            }
-            
-            .stats-card .number {
-                font-size: 1.5rem;
-            }
-            
-            .card {
-                margin-bottom: 1rem;
-            }
-        }
-        
         .footer {
             background-color: var(--primary-color);
             color: white;
@@ -244,6 +226,113 @@
         
         .table th {
             font-weight: 600;
+        }
+        
+        /* Pengaturan tabel untuk tampilan mobile */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem 0;
+            }
+            
+            .stats-card .icon {
+                font-size: 2rem;
+            }
+            
+            .stats-card .number {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+            }
+            
+            .table th, .table td {
+                white-space: nowrap;
+                max-width: 80px; /* Lebar maksimum kolom */
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding: 0.5rem 0.3rem;
+            }
+            
+            /* Kolom ID dibuat lebih sempit */
+            .table th:first-child, .table td:first-child {
+                max-width: 50px;
+            }
+            
+            /* Kolom Nama dibuat sedikit lebih lebar */
+            .table th:nth-child(2), .table td:nth-child(2) {
+                max-width: 100px;
+            }
+            
+            /* Kolom Ring, Jiwa, dan Paket dibuat sangat sempit */
+            .table th:nth-child(3), .table td:nth-child(3),
+            .table th:nth-child(4), .table td:nth-child(4),
+            .table th:nth-child(5), .table td:nth-child(5) {
+                max-width: 40px;
+                text-align: center;
+            }
+            
+            /* Tambahkan tooltip untuk menampilkan teks lengkap saat dihover */
+            .table td {
+                position: relative;
+            }
+            
+            .table td:hover::after {
+                content: attr(data-full-text);
+                position: absolute;
+                left: 0;
+                top: 100%;
+                z-index: 1000;
+                background-color: #fff;
+                padding: 5px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                white-space: normal;
+                max-width: 200px;
+                word-wrap: break-word;
+                width: auto;
+                min-width: 100px;
+                font-size: 0.8rem;
+            }
+            
+            /* Mencegah tooltip keluar dari layar */
+            .table td:last-child:hover::after {
+                right: 0;
+                left: auto;
+            }
+            
+            /* Perbaikan tampilan badge pada mobile */
+            .badge {
+                font-size: 0.7rem;
+                padding: 0.3em 0.5em;
+            }
+            
+            /* Mengurangi ukuran font pada tabel di mobile */
+            .table {
+                font-size: 0.8rem;
+            }
+            
+            /* Memperbaiki tampilan pagination di mobile */
+            .dataTables_paginate .paginate_button {
+                padding: 0.3em 0.5em;
+            }
+            
+            /* Memperbaiki tampilan length menu di mobile */
+            .dataTables_length select {
+                width: 60px;
+            }
+            
+            /* Perbaikan tampilan search box pada mobile */
+            .search-container input {
+                font-size: 0.9rem;
+                padding: 0.5rem 2.5rem;
+            }
+            
+            .search-container .fa-search {
+                left: 1rem;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -664,11 +753,13 @@
                 // Create ID cell
                 const idCell = document.createElement('td');
                 idCell.textContent = item.ID;
+                idCell.setAttribute('data-full-text', item.ID);
                 row.appendChild(idCell);
                 
                 // Create Name cell
                 const nameCell = document.createElement('td');
                 nameCell.textContent = item["Nama Kepala Keluarga"];
+                nameCell.setAttribute('data-full-text', item["Nama Kepala Keluarga"]);
                 row.appendChild(nameCell);
                 
                 // Create Ring cell (only for all table)
@@ -678,17 +769,20 @@
                     ringBadge.className = `badge badge-ring-${item.Ring}`;
                     ringBadge.textContent = `Ring ${item.Ring}`;
                     ringCell.appendChild(ringBadge);
+                    ringCell.setAttribute('data-full-text', `Ring ${item.Ring}`);
                     row.appendChild(ringCell);
                 }
                 
                 // Create Jiwa cell
                 const jiwaCell = document.createElement('td');
                 jiwaCell.textContent = item.Jiwa;
+                jiwaCell.setAttribute('data-full-text', `Jumlah Jiwa: ${item.Jiwa}`);
                 row.appendChild(jiwaCell);
                 
                 // Create Paket cell
                 const paketCell = document.createElement('td');
                 paketCell.textContent = item["Jumlah Paket"];
+                paketCell.setAttribute('data-full-text', `Jumlah Paket: ${item["Jumlah Paket"]}`);
                 row.appendChild(paketCell);
                 
                 tableBody.appendChild(row);
@@ -715,13 +809,66 @@
                     }
                 },
                 pageLength: 10,
-                lengthMenu: [5, 10, 25, 50, 100]
+                lengthMenu: [5, 10, 25, 50, 100],
+                columnDefs: [
+                    // Kolom ID (indeks 0)
+                    { 
+                        targets: 0,
+                        width: "50px",
+                        className: "text-center"
+                    },
+                    // Kolom Nama (indeks 1)
+                    { 
+                        targets: 1,
+                        width: "150px"
+                    },
+                    // Kolom Ring, Jiwa, Paket (indeks 2, 3, 4)
+                    { 
+                        targets: [2, 3, 4],
+                        width: "40px",
+                        className: "text-center"
+                    }
+                ],
+                autoWidth: false
             };
             
             allTable = $('#allTable').DataTable(dataTablesOptions);
-            ring1Table = $('#ring1Table').DataTable(dataTablesOptions);
-            ring2Table = $('#ring2Table').DataTable(dataTablesOptions);
-            ring3Table = $('#ring3Table').DataTable(dataTablesOptions);
+            
+            // Untuk tabel ring spesifik, sesuaikan columnDefs karena tidak ada kolom Ring
+            const ringTableOptions = {
+                ...dataTablesOptions,
+                columnDefs: [
+                    // Kolom ID (indeks 0)
+                    { 
+                        targets: 0,
+                        width: "50px",
+                        className: "text-center"
+                    },
+                    // Kolom Nama (indeks 1)
+                    { 
+                        targets: 1,
+                        width: "150px"
+                    },
+                    // Kolom Jiwa, Paket (indeks 2, 3)
+                    { 
+                        targets: [2, 3],
+                        width: "40px",
+                        className: "text-center"
+                    }
+                ]
+            };
+            
+            ring1Table = $('#ring1Table').DataTable(ringTableOptions);
+            ring2Table = $('#ring2Table').DataTable(ringTableOptions);
+            ring3Table = $('#ring3Table').DataTable(ringTableOptions);
+            
+            // Tambahkan event listener untuk redraw tabel saat ukuran window berubah
+            $(window).resize(function() {
+                allTable.columns.adjust().draw();
+                ring1Table.columns.adjust().draw();
+                ring2Table.columns.adjust().draw();
+                ring3Table.columns.adjust().draw();
+            });
         }
         
         // Create charts
