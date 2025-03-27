@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Pemberi Zakat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #17a2b8;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .btn-success {
+            margin-bottom: 20px;
+        }
+        .table-responsive {
+            margin-top: 20px;
+        }
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        .anggota-tooltip {
+            cursor: pointer;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-list-alt"></i> Daftar Pemberi Zakat</h1>
+        
+        <a href="index.html" class="btn btn-success">
+            <i class="fas fa-plus-circle"></i> Tambah Data Baru
+        </a>
+        
+        <div class="table-responsive">
+            <table id="zakatTable" class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>No</th>
+                        <th>Tanggal & Waktu</th>
+                        <th>Nama Kepala Keluarga</th>
+                        <th>Anggota Keluarga</th>
+                        <th>Total Jiwa</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data akan diisi melalui JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="loadingOverlay">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Ganti URL ini dengan URL dari Google Apps Script web app Anda
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzTK-uk04kIyR5peXy0zVoU4DxYk_XIgHSiApIbaK_XKNWRPeFze75FMvCkbQhMR9OL/exec';
+        
+        const tableBody = document.getElementById('tableBody');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        // Fungsi untuk memuat data dari Google Sheets
+        async function loadData() {
+            try {
+                // Tampilkan loading overlay
+                loadingOverlay.style.display = 'flex';
+                
+                // Fetch data dari Google Apps Script
+                const response = await fetch(scriptURL + '?action=getData');
+                const data = await response.json();
+                
+                // Sembunyikan loading overlay
+                loadingOverlay.style.display = 'none';
+                
+                // Hapus header (baris pertama) dari data
+                const rows = data.slice(1);
+                
+                // Isi tabel dengan data
+                tableBody.innerHTML = '';
+                rows.forEach((row, index) => {
+                    const [tanggal, waktu, namaKepala, anggotaKeluarga, totalJiwa] = row;
+                    
+                    // Buat array dari anggota keluarga (jika ada)
+                    let anggotaArray = [];
+                    if (anggotaKeluarga) {
+                        anggotaArray = anggotaKeluarga.split(', ');
+                    }
+                    
+                    // Tentukan tampilan anggota keluarga
+                    let anggotaDisplay = '';
+                    if (anggotaArray.length > 0) {
+                        if (anggotaArray.length <= 2) {
+                            anggotaDisplay = anggotaKeluarga;
+                        } else {
+                            anggotaDisplay = `<span class="anggota-tooltip" data-anggota="${anggotaKeluarga}">${anggotaArray.length} anggota keluarga</span>`;
+                        }
+                    } else {
+                        anggotaDisplay = '-';
+                    }
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${tanggal} ${waktu}</td>
+                        <td>${namaKepala}</td>
+                        <td>${anggotaDisplay}</td>
+                        <td><span class="badge-success">${totalJiwa}</span></td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+                
+                // Inisialisasi DataTable
+                $('#zakatTable').DataTable({
+                    responsive: true,
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/id.json'
+                    },
+                    order: [[1, 'desc']] // Urutkan berdasarkan tanggal & waktu (kolom kedua)
+                });
+                
+                // Tambahkan event listener untuk tooltip anggota keluarga
+                document.querySelectorAll('.anggota-tooltip').forEach(tooltip => {
+                    tooltip.addEventListener('click', function() {
+                        const anggota = this.getAttribute('data-anggota');
+                        const anggotaList = anggota.split(', ').map(item => `<li>${item}</li>`).join('');
+                        
+                        Swal.fire({
+                            title: 'Daftar Anggota Keluarga',
+                            html: `<ul style="text-align: left;">${anggotaList}</ul>`,
+                            confirmButtonColor: '#28a745'
+                        });
+                    });
+                });
+                
+            } catch (error) {
+                // Sembunyikan loading overlay
+                loadingOverlay.style.display = 'none';
+                
+                // Tampilkan pesan error
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Terjadi kesalahan saat memuat data.',
+                    confirmButtonColor: '#dc3545'
+                });
+                console.error('Error!', error);
+            }
+        }
+        
+        // Muat data saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>

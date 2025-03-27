@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Zakat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #28a745;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        .btn-info {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        .form-label {
+            font-weight: 600;
+        }
+        .anggota-list {
+            margin-top: 10px;
+        }
+        .anggota-item {
+            background-color: #e9f7ef;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .delete-btn {
+            color: #dc3545;
+            cursor: pointer;
+        }
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            display: none;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-hand-holding-heart"></i> Form Zakat</h1>
+        
+        <form id="zakatForm">
+            <div class="mb-3">
+                <label for="namaKepala" class="form-label">Nama Kepala Keluarga</label>
+                <input type="text" class="form-control" id="namaKepala" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Anggota Keluarga</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="anggotaInput" placeholder="Nama anggota keluarga">
+                    <button class="btn btn-outline-success" type="button" id="tambahAnggota">
+                        <i class="fas fa-plus"></i> Tambah
+                    </button>
+                </div>
+                <div class="anggota-list" id="anggotaList"></div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="totalJiwa" class="form-label">Total Jiwa</label>
+                <input type="number" class="form-control" id="totalJiwa" readonly>
+            </div>
+            
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-paper-plane"></i> Kirim Data
+            </button>
+        </form>
+        
+        <a href="daftar.html" class="btn btn-info">
+            <i class="fas fa-list"></i> Lihat Daftar Pemberi Zakat
+        </a>
+    </div>
+
+    <div id="loadingOverlay">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Ganti URL ini dengan URL dari Google Apps Script web app Anda
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzTK-uk04kIyR5peXy0zVoU4DxYk_XIgHSiApIbaK_XKNWRPeFze75FMvCkbQhMR9OL/exec';
+        
+        const anggotaList = document.getElementById('anggotaList');
+        const anggotaInput = document.getElementById('anggotaInput');
+        const tambahAnggotaBtn = document.getElementById('tambahAnggota');
+        const totalJiwaInput = document.getElementById('totalJiwa');
+        const form = document.getElementById('zakatForm');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        let anggotaKeluarga = [];
+        
+        // Fungsi untuk menghitung total jiwa
+        function hitungTotalJiwa() {
+            // Total jiwa = kepala keluarga (1) + jumlah anggota keluarga
+            const total = 1 + anggotaKeluarga.length;
+            totalJiwaInput.value = total;
+        }
+        
+        // Inisialisasi total jiwa
+        hitungTotalJiwa();
+        
+        // Tambah anggota keluarga
+        tambahAnggotaBtn.addEventListener('click', function() {
+            const nama = anggotaInput.value.trim();
+            if (nama) {
+                anggotaKeluarga.push(nama);
+                renderAnggotaList();
+                anggotaInput.value = '';
+                hitungTotalJiwa();
+            }
+        });
+        
+        // Render daftar anggota keluarga
+        function renderAnggotaList() {
+            anggotaList.innerHTML = '';
+            anggotaKeluarga.forEach((anggota, index) => {
+                const item = document.createElement('div');
+                item.className = 'anggota-item';
+                item.innerHTML = `
+                    <span>${anggota}</span>
+                    <span class="delete-btn" data-index="${index}">
+                        <i class="fas fa-times"></i>
+                    </span>
+                `;
+                anggotaList.appendChild(item);
+            });
+            
+            // Tambahkan event listener untuk tombol hapus
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    anggotaKeluarga.splice(index, 1);
+                    renderAnggotaList();
+                    hitungTotalJiwa();
+                });
+            });
+        }
+        
+        // Submit form
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const namaKepala = document.getElementById('namaKepala').value.trim();
+            
+            if (!namaKepala) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Nama kepala keluarga harus diisi!'
+                });
+                return;
+            }
+            
+            // Dapatkan tanggal dan waktu saat ini (timezone Asia/Jakarta)
+            const now = new Date();
+            const jakartaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+            
+            const tanggal = jakartaTime.toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            
+            const waktu = jakartaTime.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Tampilkan loading overlay
+            loadingOverlay.style.display = 'flex';
+            
+            // Kirim data ke Google Sheets
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'tanggal': tanggal,
+                    'waktu': waktu,
+                    'namaKepala': namaKepala,
+                    'anggotaKeluarga': anggotaKeluarga.join(', '),
+                    'totalJiwa': totalJiwaInput.value
+                })
+            })
+            .then(() => {
+                // Sembunyikan loading overlay
+                loadingOverlay.style.display = 'none';
+                
+                // Tampilkan pesan sukses
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Data zakat berhasil disimpan.',
+                    confirmButtonColor: '#28a745'
+                }).then(() => {
+                    // Reset form
+                    form.reset();
+                    anggotaKeluarga = [];
+                    renderAnggotaList();
+                    hitungTotalJiwa();
+                });
+            })
+            .catch(error => {
+                // Sembunyikan loading overlay
+                loadingOverlay.style.display = 'none';
+                
+                // Tampilkan pesan error
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Terjadi kesalahan saat menyimpan data.',
+                    confirmButtonColor: '#dc3545'
+                });
+                console.error('Error!', error.message);
+            });
+        });
+    </script>
+</body>
+</html>
